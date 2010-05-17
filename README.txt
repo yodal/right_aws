@@ -1,3 +1,5 @@
+Unofficial fork of right_aws gem.
+
 = RightScale Amazon Web Services Ruby Gems
 
 Published by RightScale, Inc. under the MIT License.

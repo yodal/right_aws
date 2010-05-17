@@ -33,7 +33,7 @@ module RightAws
     DEFAULT_PORT      = 443
     DEFAULT_PROTOCOL  = 'https'
     DEFAULT_PATH      = '/'
-    API_VERSION       = '2007-11-07'
+    API_VERSION       = '2009-04-15'
     DEFAULT_NIL_REPRESENTATION = 'nil'
 
     @@bench = AwsBenchmarkingBlock.new
@@ -332,10 +332,11 @@ module RightAws
     #
     # see: http://docs.amazonwebservices.com/AmazonSimpleDB/2007-11-07/DeveloperGuide/SDB_API_GetAttributes.html
     #
-    def get_attributes(domain_name, item_name, attribute_name=nil)
+    def get_attributes(domain_name, item_name, attribute_name=nil, consistent_read=false)
       link = generate_request("GetAttributes", 'DomainName'    => domain_name,
                                                'ItemName'      => item_name,
-                                               'AttributeName' => attribute_name )
+                                               'AttributeName' => attribute_name,
+					       'ConsistentRead' => consistent_read )
       res = request_info(link, QSdbGetAttributesParser.new)
       res[:attributes].each_value do |values|
         values.collect! { |e| sdb_to_ruby(e) }
