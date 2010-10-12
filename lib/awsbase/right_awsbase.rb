@@ -243,15 +243,12 @@ module RightAws
         @params[:service]  ||= service_info[:default_service]
         @params[:protocol] ||= service_info[:default_protocol]
       end
-#      @params[:multi_thread] ||= defined?(AWS_DAEMON)
-      @params[:connections] ||= :shared # || :dedicated
-      @params[:max_connections] ||= 10
       @params[:connection_lifetime] ||= 20*60
       @params[:api_version]  ||= service_info[:default_api_version]
       @logger = @params[:logger]
       @logger = RAILS_DEFAULT_LOGGER if !@logger && defined?(RAILS_DEFAULT_LOGGER)
       @logger = Logger.new(STDOUT)   if !@logger
-      @logger.info "New #{self.class.name} using #{@params[:connections]} connections mode"
+      @logger.info "New #{self.class.name}"
       @error_handler = nil
       @cache = {}
       @signature_version = (params[:signature_version] || DEFAULT_SIGNATURE_VERSION).to_s
@@ -388,6 +385,21 @@ module RightAws
       @connections_storage[server_url][:connection]
     end
 
+    def destroy_connection(aws_service, request)
+      connections = get_connections_storage aws_service
+      url         = get_server_url request
+      connections[url][:connection].finish('destroyed') if connections[url]
+      connections[url] = nil
+    end
+
+    def get_connections_storage(aws_service)
+      @connections_storage = (Thread.current[aws_service] ||= {})
+    end
+
+    def get_server_url(request)
+      "#{request[:protocol]}://#{request[:server]}:#{request[:port]}}"
+    end
+
     # All services uses this guy.
     def request_info_impl(aws_service, benchblock, request, parser, &block) #:nodoc:
       @connection    = get_connection(aws_service, request)
@@ -445,6 +457,7 @@ module RightAws
           benchblock.xml.add! { parser.parse(response) }
           return parser.result
         else
+          destroy_connection aws_service, request
           @error_handler = AWSErrorHandler.new(self, parser, :errors_list => self.class.amazon_problems) unless @error_handler
           check_result   = @error_handler.check(request)
           if check_result
