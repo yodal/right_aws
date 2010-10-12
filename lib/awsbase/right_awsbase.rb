@@ -243,6 +243,7 @@ module RightAws
         @params[:service]  ||= service_info[:default_service]
         @params[:protocol] ||= service_info[:default_protocol]
       end
+      @params[:max_connections] ||= 10
       @params[:connection_lifetime] ||= 20*60
       @params[:api_version]  ||= service_info[:default_api_version]
       @logger = @params[:logger]
